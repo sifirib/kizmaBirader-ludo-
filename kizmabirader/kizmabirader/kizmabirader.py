@@ -3,6 +3,7 @@ import time
 import random
 
 pygame.init()
+font = pygame.font.Font('freesansbold.ttf', 20)
 screenx, screeny = 600, 600
 screen = pygame.display.set_mode((screenx, screeny))
 board = pygame.image.load('board.png')
@@ -21,6 +22,15 @@ points = [[40, 225], [88, 225], [136, 225], [184, 225], [232, 225],
           [184, 328], [136, 328], [88, 328], [40, 328],
           [40, 280]]
 
+parks = [[85, 277],[133, 277 ],[181, 277],[229, 277],
+         [280, 80],[280, 128],[280, 178],[280, 228],
+         [480, 277],[430, 277],[380, 277],[330, 277],
+         [280, 480],[280, 430],[280, 380],[280, 330]]
+
+parkb = [[85, 277],[133, 277 ],[181, 277],[229, 277]]
+parkr = [[280, 80],[280, 128],[280, 178],[280, 228]]
+parkg = [[480, 277],[430, 277],[380, 277],[330, 277]]
+parky = [[280, 480],[280, 430],[280, 380],[280, 330]]
 
 class Player:
     def __init__(self, image, x, y):
@@ -30,8 +40,8 @@ class Player:
 
     def isOver(self, pos):
         # Pos is the mouse position or a tuple of (x,y) coordinates
-        if pos[0] > self.x and pos[0] < self.x + 24:
-            if pos[1] > self.y and pos[1] < self.y + 24:
+        if pos[0] > self.x and pos[0] < self.x + 40:
+            if pos[1] > self.y and pos[1] < self.y + 40:
                 return True
 
         return False
@@ -41,6 +51,22 @@ def draw_player(image, x, y):
 
 def roll_the_dice():
     return random.randint(1, 6)
+
+def draw_dice():
+    global value_of_dice
+    if value_of_dice == 1:
+        image = pygame.image.load("dice_1.png")
+    if value_of_dice == 2:
+        image = pygame.image.load("dice_2.png")
+    if value_of_dice == 3:
+        image = pygame.image.load("dice_3.png")
+    if value_of_dice == 4:
+        image = pygame.image.load("dice_4.png")
+    if value_of_dice == 5:
+        image = pygame.image.load("dice_5.png")
+    if value_of_dice == 6:
+        image = pygame.image.load("dice_6.png")
+    screen.blit(image, (275, 275))
 
 
 def change_values():
@@ -83,13 +109,17 @@ def howmany_player_inbase(playerss, bases):
     return quantity
 
 
+
 def choose_player():
     global running
     global current_players
     i = 0
     while True:
+
         player = current_players[i]
         for event in pygame.event.get():
+            pygame.display.update()
+
             pos = pygame.mouse.get_pos()
             if event.type == pygame.QUIT:
                 running = False
@@ -107,21 +137,13 @@ def choose_player():
                     pass
                 else:
                     pass
-
         i += 1
         if i == len(current_players):
             i = 0
 
 
-
-
 def get_current_point():
-    global choosen_player
-    global color
-    global basepointsb
-    global basepointsr
-    global basepointsg
-    global basepointsy
+
     for i in range(0, len(points)):
         if choosen_player.x == points[i][0] and choosen_player.y == points[i][1]:
             return i
@@ -146,6 +168,41 @@ def get_current_point():
             if choosen_player.x == basepointsy[i][0] and choosen_player.y == basepointsy[i][1]:
                 return  i - 4
                 break
+
+def can_park():
+    if color == 'blue':
+        i = 39
+        k = 6
+    if color == 'red':
+        i = 9
+        k = 15
+    if color == 'green':
+        i = 19
+        k = 25
+    if color == 'yellow':
+        i = 29
+        k = 35
+    j = False
+    for i in range(0, len(points)):
+        if choosen_player.x == points[i][0] and choosen_player.y == points[i][1]:
+            j = True
+            break
+
+    if j:
+        x, y = choosen_player.x, choosen_player.y
+        index = points.index([x, y])
+
+        if value_of_dice > i - index and value_of_dice < i - index + 5 and index <= i and index > k:
+            print("You can park :)")
+            return True, value_of_dice - (i - index) - 1
+
+        else:
+            print("You can't park!")
+            return False, 0
+    else:
+        print("You can't park!")
+        return False, 0
+
 
 reds = []
 blues = []
@@ -186,27 +243,47 @@ pygame.display.update()
 while run:
     color = colors[j]
     if color == 'blue':
+        text_color = (0, 0, 255)
+        text_place = [70, 180 ]
         current_players = blues
         bases = basepointsb
+        parkpoints = parkb
     if color == 'red':
+        text_color = (255, 0, 0)
+        text_place = [400, 180 ]
         current_players = reds
         bases = basepointsr
+        parkpoints = parkr
     if color == 'green':
+        text_color = (0, 255, 0)
+        text_place = [400, 400]
         current_players = greens
         bases = basepointsg
+        parkpoints = parkg
     if color == 'yellow':
+        text_color = (200, 200, 0)
+        text_place = [60, 390]
         current_players = yellows
         bases = basepointsy
+        parkpoints = parky
     j += 1
     if j == 4:
         j = 0
     l += 1
-
     print(color)
+    text = font.render("YOUR TURN", True, text_color)
+    text_rect = text.get_rect()
+    screen.blit(board, [15, 15])
+    screen.blit(text, text_place)
+    for player in players:
+        draw_player(player.image, player.x, player.y)
+    pygame.display.update()
 
     running = True
     while running:
         value_of_dice = roll_the_dice()
+        draw_dice()
+        pygame.display.update()
         print("Value of the dice: ", value_of_dice)
         change_values()
 
@@ -216,6 +293,7 @@ while run:
             print("Try at the next time")
             running = False
             time.sleep(1)
+
         else:
             ok = True
             while ok:
@@ -230,6 +308,9 @@ while run:
                         ok = False
                         current_point = get_current_point()
                         next_point = value_of_dice + current_point
+                        canpark, parkstep_no = can_park()
+                        if canpark:
+                            next_point = parkstep_no - 1
                 if value_of_dice == 6:
                     ok = False
                     for k in range(0, len(basepoints)):
@@ -247,6 +328,9 @@ while run:
                         else:
                             current_point = get_current_point()
                             next_point = value_of_dice + current_point
+                            canpark, parkstep_no = can_park()
+                            if canpark:
+                                next_point = parkstep_no - 1
             if next_point > 39:
                 next_point = next_point - 40
             print("current point: ", current_point)
@@ -259,6 +343,8 @@ while run:
                 if howmany_player_inbase(current_players, bases) < 4:
 
                     print(choosen_player.x, choosen_player.y)
+                    if canpark:
+                        current_players[place_inlist].x, current_players[place_inlist].y = parkpoints[next_point][0], parkpoints[next_point][1]
                     current_players[place_inlist].x, current_players[place_inlist].y = points[next_point][0], points[next_point][1]
                     change_values()
                     screen.blit(board, [15, 15])
@@ -274,6 +360,8 @@ while run:
                     if next_point > 39:
                         next_point = next_point - 40
                     print(choosen_player.x, choosen_player.y)
+                    if canpark:
+                        current_players[place_inlist].x, current_players[place_inlist].y = parkpoints[next_point][0], parkpoints[next_point][1]
                     current_players[place_inlist].x, current_players[place_inlist].y = points[next_point][0], points[next_point][1]
                     change_values()
                     screen.blit(board, [15, 15])
